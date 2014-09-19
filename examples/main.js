@@ -3,13 +3,16 @@
 requirejs.config({
     paths: {
         'jquery': 'jquery/jquery',
+        'gpub': 'gpub/gpub',
         'extend': 'gextend/extend',
         'gcollection': 'gcollection'
     }
 });
 
-define(['gcollection', 'jquery'], function(GCollection, $) {
+define(['gcollection', 'gpub', 'jquery'], function(GCollection, GPub, $) {
     console.log('Loading');
+
+    GPub.observable(GCollection);
 
     var Users = new GCollection({
         indexKey: '_id',
