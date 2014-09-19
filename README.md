@@ -56,3 +56,14 @@ _(Coming soon)_
 
 ## Release History
 _(Nothing yet)_
+
+
+## GCollection
+- It should work with POJOs and any type of model
+- It should send update events
+- It does not allow null values
+- Does not allow duplicates
+- Fast index by key
+- Array of values
+- Provide array methods such as find/filter/sort
+- Provide findBy?
