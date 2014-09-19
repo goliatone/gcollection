@@ -7,10 +7,10 @@
  */
 /* jshint strict: false, plusplus: true */
 /*global define: false, require: false, module: false, exports: false */
-(function (root, name, deps, factory) {
+(function(root, name, deps, factory) {
     "use strict";
     // Node
-     if(typeof deps === 'function') {
+    if (typeof deps === 'function') {
         factory = deps;
         deps = [];
     }
@@ -23,11 +23,14 @@
         define(name.toLowerCase(), deps, factory);
     } else {
         // Browser
-        var d, i = 0, global = root, old = global[name], mod;
-        while((d = deps[i]) !== undefined) deps[i++] = root[d];
+        var d, i = 0,
+            global = root,
+            old = global[name],
+            mod;
+        while ((d = deps[i]) !== undefined) deps[i++] = root[d];
         global[name] = mod = factory.apply(global, deps);
         //Export no 'conflict module', aliases the module.
-        mod.noConflict = function(){
+        mod.noConflict = function() {
             global[name] = old;
             return mod;
         };
@@ -40,7 +43,7 @@
      * @return {Object}        Resulting object from
      *                         meging target to params.
      */
-    var _extend= extend;
+    var _extend = extend;
 
     /**
      * Shim console, make sure that if no console
@@ -72,33 +75,33 @@
     };
 
     var _isObject = function(obj) {
-        if(!obj) return false;
+        if (!obj) return false;
         return obj.constructor.toString().indexOf('function Object') === 0;
         return typeof obj === 'object';
     };
 
-///////////////////////////////////////////////////
-// CONSTRUCTOR
-///////////////////////////////////////////////////
+    ///////////////////////////////////////////////////
+    // CONSTRUCTOR
+    ///////////////////////////////////////////////////
 
     var options = {
-        indexKey:'id',
-        autoinitialize:true,
-        updateStrategy:extend,
-        defaultOptions:{
-            notify:true
+        indexKey: 'id',
+        autoinitialize: true,
+        updateStrategy: extend,
+        defaultOptions: {
+            notify: true
         }
     };
-window.extend = _extend;
+    window.extend = _extend;
     /**
      * GCollection constructor
      *
      * @param  {object} config Configuration object.
      */
-    var GCollection = function(config){
+    var GCollection = function(config) {
         config = _extend({}, this.constructor.DEFAULTS, config);
 
-        if(config.autoinitialize) this.init(config);
+        if (config.autoinitialize) this.init(config);
     };
 
     GCollection.name = GCollection.prototype.name = 'GCollection';
@@ -111,17 +114,17 @@ window.extend = _extend;
      */
     GCollection.DEFAULTS = options;
 
-///////////////////////////////////////////////////
-// PRIVATE METHODS
-///////////////////////////////////////////////////
+    ///////////////////////////////////////////////////
+    // PRIVATE METHODS
+    ///////////////////////////////////////////////////
 
     /**
      * Initialization method.
      * @param  {Object} config Config object.
      * @return {this}
      */
-    GCollection.prototype.init = function(config){
-        if(this.initialized) return this.logger.warn('Already initialized');
+    GCollection.prototype.init = function(config) {
+        if (this.initialized) return this.logger.warn('Already initialized');
         this.initialized = true;
 
         this.reset();
@@ -133,7 +136,7 @@ window.extend = _extend;
         return this;
     };
 
-    GCollection.prototype.reset = function(){
+    GCollection.prototype.reset = function() {
         // this._list = [];
         this._hash = {};
         this._count = 0;
@@ -141,16 +144,18 @@ window.extend = _extend;
     };
 
 
-    GCollection.prototype.add = function(item, options){
-        //We do not take duplicates, so check if we already have it
-        if(this.has(item)){
-            //Should we update?!
-            this.update(item, options);
+    GCollection.prototype.add = function(item, options) {
+        if (_isArray(item)) {
+            item.map(function(i) {
+                this.add(i, options);
+            }, this);
             return this;
         }
 
-        if(_isArray(item)) {
-            item.map(function(i){this.add(i, options)}, this);
+        //We do not take duplicates, so check if we already have it
+        if (this.has(item)) {
+            //Should we update?!
+            this.update(item, options);
             return this;
         }
 
@@ -160,10 +165,10 @@ window.extend = _extend;
         var key = this.getKey(item);
 
         this._hash[key] = item;
-        this._count ++;
+        this._count++;
         this._dirty = true;
         //TODO: Do we want this to be two events? change & add?
-        if(options.notify) this.emit('add', item);
+        if (options.notify) this.emit('add', item);
 
         return this;
     };
@@ -172,23 +177,25 @@ window.extend = _extend;
     //itself?! if model it should be handled by the model
     //if POJO then it would be extend. But we need to notify
     //with {value:item, old:old}
-    GCollection.prototype.update = function(item, options){
+    GCollection.prototype.update = function(item, options) {
         options = extend({}, this.defaultOptions, options);
         var old = this.get(item);
         this.updateStrategy(old, item);
-        if(options.notify) this.emit('update', old);
+        if (options.notify) this.emit('update', old);
         return this;
     };
 
-    GCollection.prototype.get = function(key){
+    GCollection.prototype.get = function(key) {
         return this._hash[this.getKey(key)];
     };
 
-    GCollection.prototype.remove = function(item, options){
-        if(!this.has(item)) return item;
+    GCollection.prototype.remove = function(item, options) {
+        if (!this.has(item)) return item;
 
-        if(_isArray(item)) {
-            item.map(function(i){this.remove(i, options)}, this);
+        if (_isArray(item)) {
+            item.map(function(i) {
+                this.remove(i, options);
+            }, this);
             return this;
         }
 
@@ -197,40 +204,54 @@ window.extend = _extend;
         var key = this.getKey(item);
 
         delete this._hash[key];
-        this._count --;
+        this._count--;
         this._dirty = true;
 
-        if(options.notify) this.emit('remove', item);
+        if (options.notify) this.emit('remove', item);
 
         return item;
     };
 
-    GCollection.prototype.has = function(itemOrKey){
-        return !! this.get();
+    GCollection.prototype.has = function(itemOrKey) {
+        return !!this.get();
     };
 
-    GCollection.prototype.getKey = function(item){
-        if(_isObject(item)) return item[this.indexKey];
+    GCollection.prototype.getKey = function(item) {
+        if (_isObject(item)) return item[this.indexKey];
         return item;
     };
 
-    GCollection.prototype.values = function(clone){
-        if(this._dirty){
+    GCollection.prototype.values = function(clone) {
+        if (this._dirty) {
             this._vals = [];
-            for(var o in this._hash) this._vals.push(this._hash[o]);
+            for (var o in this._hash) this._vals.push(this._hash[o]);
             this._dirty = false;
         }
         return clone ? this._vals.concat() : this._vals;
     };
 
-    GCollection.prototype.count = function(){
+    GCollection.prototype.count = function() {
         return this._count;
     };
 
-    var EXTENDS = ['sort', 'filter', 'some', 'every', 'find'];
+    GCollection.prototype.where = function(filters) {
+        //filters is an object
+        var contains = function(item, filter) {
+            for (var o in filter) {
+                console.log('prop', o, item[o], filter[o])
+                if (item[o] !== filter[o]) return false;
+            }
+            return true;
+        };
+        return this.values(true).filter(function(item) {
+            return contains(item, filters);
+        });
+    };
 
-    EXTENDS.forEach(function(method){
-        GCollection.prototype[method] = function(){
+    var EXTENDS = ['sort', 'filter', 'some', 'every', 'find', 'map'];
+
+    EXTENDS.forEach(function(method) {
+        GCollection.prototype[method] = function() {
             var args = [].slice.call(arguments, 0);
             return [][method].apply(this.values(), args);
         };
