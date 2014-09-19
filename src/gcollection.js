@@ -82,15 +82,11 @@
 ///////////////////////////////////////////////////
 
     var options = {
-        autoinitialize:true,
         indexKey:'id',
-        options:{
-            add:{
-                notify:true
-            },
-            remove:{
-                notify:true
-            }
+        autoinitialize:true,
+        updateStrategy:extend,
+        defaultOptions:{
+            notify:true
         }
     };
 window.extend = _extend;
@@ -149,7 +145,7 @@ window.extend = _extend;
         //We do not take duplicates, so check if we already have it
         if(this.has(item)){
             //Should we update?!
-
+            this.update(item, options);
             return this;
         }
 
@@ -158,7 +154,7 @@ window.extend = _extend;
             return this;
         }
 
-        options = extend({}, this.options.add, options);
+        options = extend({}, this.defaultOptions, options);
 
         //TODO: Do we want to support add {at:index}?
         var key = this.getKey(item);
@@ -172,8 +168,20 @@ window.extend = _extend;
         return this;
     };
 
+    //TODO: Should this even be here or be part of the item
+    //itself?! if model it should be handled by the model
+    //if POJO then it would be extend. But we need to notify
+    //with {value:item, old:old}
+    GCollection.prototype.update = function(item, options){
+        options = extend({}, this.defaultOptions, options);
+        var old = this.get(item);
+        this.updateStrategy(old, item);
+        if(options.notify) this.emit('update', old);
+        return this;
+    };
+
     GCollection.prototype.get = function(key){
-        return this._hash[key];
+        return this._hash[this.getKey(key)];
     };
 
     GCollection.prototype.remove = function(item, options){
@@ -184,7 +192,7 @@ window.extend = _extend;
             return this;
         }
 
-        options = extend({}, this.options.remove, options);
+        options = extend({}, this.defaultOptions, options);
 
         var key = this.getKey(item);
 
@@ -198,7 +206,7 @@ window.extend = _extend;
     };
 
     GCollection.prototype.has = function(itemOrKey){
-        return !! this.get(this.getKey(itemOrKey));
+        return !! this.get();
     };
 
     GCollection.prototype.getKey = function(item){
