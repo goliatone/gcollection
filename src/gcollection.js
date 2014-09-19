@@ -248,6 +248,10 @@
         });
     };
 
+    GCollection.prototype.valueOf = function() {
+        return this._hash;
+    };
+
     var EXTENDS = ['sort', 'filter', 'some', 'every', 'find', 'map'];
 
     EXTENDS.forEach(function(method) {
