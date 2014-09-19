@@ -227,7 +227,7 @@ window.extend = _extend;
         return this._count;
     };
 
-    var EXTENDS = ['sort', 'filter', 'some', 'every'];
+    var EXTENDS = ['sort', 'filter', 'some', 'every', 'find'];
 
     EXTENDS.forEach(function(method){
         GCollection.prototype[method] = function(){
