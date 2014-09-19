@@ -67,27 +67,42 @@
         return con;
     };
 
+    var _isArray = ('isArray' in Array) ? Array.isArray : function(value) {
+        return Object.prototype.toString.call(value) === '[object Array]';
+    };
 
+    var _isObject = function(obj) {
+        if(!obj) return false;
+        return obj.constructor.toString().indexOf('function Object') === 0;
+        return typeof obj === 'object';
+    };
 
 ///////////////////////////////////////////////////
 // CONSTRUCTOR
 ///////////////////////////////////////////////////
 
-	var options = {
-
+    var options = {
+        autoinitialize:true,
+        indexKey:'id',
+        options:{
+            add:{
+                notify:true
+            },
+            remove:{
+                notify:true
+            }
+        }
     };
-
+window.extend = _extend;
     /**
      * GCollection constructor
      *
      * @param  {object} config Configuration object.
      */
     var GCollection = function(config){
-        config  = config || {};
-
         config = _extend({}, this.constructor.DEFAULTS, config);
 
-        this.init(config);
+        if(config.autoinitialize) this.init(config);
     };
 
     GCollection.name = GCollection.prototype.name = 'GCollection';
@@ -104,15 +119,114 @@
 // PRIVATE METHODS
 ///////////////////////////////////////////////////
 
+    /**
+     * Initialization method.
+     * @param  {Object} config Config object.
+     * @return {this}
+     */
     GCollection.prototype.init = function(config){
         if(this.initialized) return this.logger.warn('Already initialized');
         this.initialized = true;
 
+        this.reset();
+
         console.log('GCollection: Init!');
+
         _extend(this, config);
 
-        return 'This is just a stub!';
+        return this;
     };
+
+    GCollection.prototype.reset = function(){
+        // this._list = [];
+        this._hash = {};
+        this._count = 0;
+        this._dirty = false;
+    };
+
+
+    GCollection.prototype.add = function(item, options){
+        //We do not take duplicates, so check if we already have it
+        if(this.has(item)){
+            //Should we update?!
+
+            return this;
+        }
+
+        if(_isArray(item)) {
+            item.map(function(i){this.add(i, options)}, this);
+            return this;
+        }
+
+        options = extend({}, this.options.add, options);
+
+        //TODO: Do we want to support add {at:index}?
+        var key = this.getKey(item);
+
+        this._hash[key] = item;
+        this._count ++;
+        this._dirty = true;
+        //TODO: Do we want this to be two events? change & add?
+        if(options.notify) this.emit('add', item);
+
+        return this;
+    };
+
+    GCollection.prototype.get = function(key){
+        return this._hash[key];
+    };
+
+    GCollection.prototype.remove = function(item, options){
+        if(!this.has(item)) return item;
+
+        if(_isArray(item)) {
+            item.map(function(i){this.remove(i, options)}, this);
+            return this;
+        }
+
+        options = extend({}, this.options.remove, options);
+
+        var key = this.getKey(item);
+
+        delete this._hash[key];
+        this._count --;
+        this._dirty = true;
+
+        if(options.notify) this.emit('remove', item);
+
+        return item;
+    };
+
+    GCollection.prototype.has = function(itemOrKey){
+        return !! this.get(this.getKey(itemOrKey));
+    };
+
+    GCollection.prototype.getKey = function(item){
+        if(_isObject(item)) return item[this.indexKey];
+        return item;
+    };
+
+    GCollection.prototype.values = function(clone){
+        if(this._dirty){
+            this._vals = [];
+            for(var o in this._hash) this._vals.push(this._hash[o]);
+            this._dirty = false;
+        }
+        return clone ? this._vals.concat() : this._vals;
+    };
+
+    GCollection.prototype.count = function(){
+        return this._count;
+    };
+
+    var EXTENDS = ['sort', 'filter', 'some', 'every'];
+
+    EXTENDS.forEach(function(method){
+        GCollection.prototype[method] = function(){
+            var args = [].slice.call(arguments, 0);
+            return [][method].apply(this.values(), args);
+        };
+    });
 
     /**
      * Logger method, meant to be implemented by
@@ -125,7 +239,7 @@
      * PubSub emit method stub.
      */
     GCollection.prototype.emit = function() {
-        this.logger.warn(GCollection, 'emit method is not implemented', arguments);
+        this.logger.warn('GCollection', 'emit method is not implemented', arguments);
     };
 
     return GCollection;
