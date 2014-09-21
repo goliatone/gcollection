@@ -87,7 +87,9 @@
     var options = {
         indexKey: 'id',
         autoinitialize: true,
-        updateStrategy: extend,
+        updateStrategy: function(old, item){
+            return item;
+        },
         defaultOptions: {
             notify: true
         }
@@ -161,6 +163,10 @@
 
         options = extend({}, this.defaultOptions, options);
 
+        //Check to ensure that item has indexKey!
+        if(!item.hasOwnProperty(this.indexKey)) return this.logger.error('Item does not have index key', this.indexKey);
+        if(!item[this.indexKey] === undefined) return;
+
         //TODO: Do we want to support add {at:index}?
         var key = this.getKey(item);
 
@@ -178,6 +184,7 @@
     //if POJO then it would be extend. But we need to notify
     //with {value:item, old:old}
     GCollection.prototype.update = function(item, options) {
+        this.logger.info('UPDATE item', item[this.indexKey]);
         options = extend({}, this.defaultOptions, options);
         var old = this.get(item);
         this.updateStrategy(old, item);
@@ -213,7 +220,7 @@
     };
 
     GCollection.prototype.has = function(itemOrKey) {
-        return !!this.get();
+        return !!this.get(itemOrKey);
     };
 
     GCollection.prototype.getKey = function(item) {
@@ -238,11 +245,11 @@
         //filters is an object
         var contains = function(item, filter) {
             for (var o in filter) {
-                console.log('prop', o, item[o], filter[o])
                 if (item[o] !== filter[o]) return false;
             }
             return true;
         };
+
         return this.values(true).filter(function(item) {
             return contains(item, filters);
         });
