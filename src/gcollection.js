@@ -139,7 +139,7 @@
     };
 
     GCollection.prototype.reset = function() {
-        // this._list = [];
+        this._vals = [];
         this._hash = {};
         this._count = 0;
         this._dirty = false;
@@ -174,7 +174,8 @@
         this._count++;
         this._dirty = true;
         //TODO: Do we want this to be two events? change & add?
-        if (options.notify) this.emit('add', item);
+        if (options.notify) this.emit('add', {value:item});
+        if (options.notify) this.emit('change', {action:'add', value:item});
 
         return this;
     };
@@ -188,7 +189,8 @@
         options = extend({}, this.defaultOptions, options);
         var old = this.get(item);
         this.updateStrategy(old, item);
-        if (options.notify) this.emit('update', old);
+        if (options.notify) this.emit('update', {value:old});
+        if (options.notify) this.emit('change', {action:'update', old:old});
         return this;
     };
 
@@ -214,7 +216,8 @@
         this._count--;
         this._dirty = true;
 
-        if (options.notify) this.emit('remove', item);
+        if (options.notify) this.emit('remove', {value:item});
+        if (options.notify) this.emit('change', {action:'remove', old:old});
 
         return item;
     };
